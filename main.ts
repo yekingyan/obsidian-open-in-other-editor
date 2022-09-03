@@ -19,7 +19,7 @@ function open(by : "gvim"| "code", path :string) {
 	runCMD(`${by} ${path}`)
 }
 
-export default class MyPlugin extends Plugin {
+export default class OpenFilePlg extends Plugin {
 	async onload() {
 
 		this.addCommand({
