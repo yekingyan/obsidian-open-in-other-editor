@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-open-in-other-editor",
 	"name": "Open in other editor",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"minAppVersion": "0.15.0",
 	"description": "Open current active file in gVim or VScode.",
 	"author": "yekingyan",

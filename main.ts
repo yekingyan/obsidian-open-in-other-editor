@@ -1,4 +1,5 @@
 import { Plugin } from 'obsidian';
+import * as os from 'os';
 
 
 function runCMD(cmd: string) {
@@ -11,14 +12,6 @@ function runCMD(cmd: string) {
     console.log(`run cmd: ${cmd}`);
   });
 }
-
-function open(by : "gvim"| "code", path :string) {
-	if (!path) {
-		return
-	}
-	runCMD(`${by} ${path}`)
-}
-
 export default class OpenFilePlg extends Plugin {
 	async onload() {
 
@@ -44,9 +37,16 @@ export default class OpenFilePlg extends Plugin {
 
 	private open(by : "gvim"| "code") {
 		let curFilePath = this.app.workspace.getActiveFile()?.path
+		if (!curFilePath) {
+			console.warn("no active file in workspace");
+			return
+		}
 		let cwd = this.app.vault.adapter.getResourcePath(".")
 		cwd = cwd.replace("app://local/", "").replace(/\?\d+.*?/, "")
-		open(by, `${cwd}/${curFilePath}`)
+		if (os.type() === "Windows_NT") {
+			runCMD(`cd /d ${cwd} && ${by} ./${curFilePath}`)
+		} else {
+			runCMD(`cd ${cwd} && ${by} ./${curFilePath}`)
+		}
 	}
-
 }
