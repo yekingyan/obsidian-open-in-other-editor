@@ -42,11 +42,11 @@ export default class OpenFilePlg extends Plugin {
 			return
 		}
 		let cwd = this.app.vault.adapter.getResourcePath(".")
-		cwd = cwd.replace("app://local/", "").replace(/\?\d+.*?/, "")
+		cwd = decodeURI(cwd.replace("app://local/", "").replace(/\?\d+.*?/, ""))
 		if (os.type() === "Windows_NT") {
 			runCMD(`cd /d ${cwd} && ${by} ./"${curFilePath}"`)
 		} else {
-			runCMD(`cd ${cwd} && ${by} ./"${curFilePath}"`)
+			runCMD(`cd /${cwd} && ${by} "${curFilePath}"`)
 		}
 	}
 }
