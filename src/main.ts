@@ -1,9 +1,26 @@
-import { DataAdapter, Plugin, Notice, App, Vault } from "obsidian";
+import {
+	DataAdapter,
+	Plugin,
+	Notice,
+	App,
+	Vault,
+	MenuItem,
+	Menu,
+} from "obsidian";
 import * as os from "os";
 import { spawn, exec } from "child_process";
 import { OpenFilePlgSettingTab } from "./components/OpenFilePlgSettingTab";
 
-type EditorName = "gvim" | "code" | "nvim-qt";
+const CONST_TO_EDITOR_MAP = {
+	GVIM: "gvim",
+	VSCODE: "code",
+	NVIM: "nvim-qt",
+} as const;
+
+type ValueOf<T> = T[keyof T];
+type EditorName = ValueOf<typeof CONST_TO_EDITOR_MAP>;
+type EditorNameToBinPathConfig = Record<EditorName, string>;
+
 type AdapterPlus = Partial<DataAdapter> & {
 	path: any;
 	basePath: any;
@@ -55,12 +72,14 @@ function handleArguments(
 type SettingConfig = {
 	vscode_path: string;
 	gvim_path: string;
+	nvim_path: string;
 };
 
 export default class OpenFilePlg extends Plugin {
 	settingConfig: SettingConfig = {
 		vscode_path: "",
 		gvim_path: "",
+		nvim_path: "",
 	};
 
 	async doLoadSettingConfig() {
@@ -74,6 +93,7 @@ export default class OpenFilePlg extends Plugin {
 	}
 	async onload() {
 		await this.doLoadSettingConfig();
+		this.activateContextMenuFeature();
 
 		this.addCommand({
 			id: "open-in-other-editor-gvim",
@@ -87,7 +107,7 @@ export default class OpenFilePlg extends Plugin {
 			id: "open-in-other-editor-vscode",
 			name: "Open current active file in VScode",
 			callback: () => {
-				this.open("code");
+				this.open(CONST_TO_EDITOR_MAP.VSCODE);
 			},
 		});
 
@@ -102,22 +122,88 @@ export default class OpenFilePlg extends Plugin {
 		this.addSettingTab(new OpenFilePlgSettingTab(app, this));
 	}
 
+	activateContextMenuFeature() {
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, abstractFile, source) => {
+				menu.addSeparator();
+				menu.addItem((mi) => {
+					mi.setTitle("Open in other editor").onClick(
+						clickHandler.bind(this)
+					);
+				});
+				function clickHandler(e: MouseEvent) {
+					if (this.settingConfig.vscode_path) {
+						return this.open(CONST_TO_EDITOR_MAP.VSCODE, {
+							curFilePath: abstractFile.path,
+						});
+					}
+					new Notice(
+						"Please save vscode editor path in settings.",
+						5000
+					);
+				}
+				menu.addSeparator();
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on(
+				"files-menu",
+				(menu: Menu, abstractFile: any, source: any) => {
+					menu.addSeparator()
+						.addItem((mi: MenuItem) => {
+							mi.setTitle("Open in other editor").onClick(
+								clickHandler.bind(this)
+							);
+						})
+						.addSeparator();
+					function clickHandler(e: MouseEvent) {
+						if (
+							this.settingConfig.vscode_path &&
+							Array.isArray(abstractFile)
+						) {
+							return abstractFile.forEach((af) => {
+								this.open(CONST_TO_EDITOR_MAP.VSCODE, {
+									curFilePath: af.path,
+								});
+							});
+						}
+						this.open(CONST_TO_EDITOR_MAP.VSCODE, {
+							curFilePath: abstractFile.path,
+						});
+					}
+				}
+			)
+		);
+	}
+
 	onunload() {}
 
-	private open(by: EditorName) {
-		let curFilePath = this.app.workspace.getActiveFile()?.path;
+	/**
+	 * @param by {EditorName}
+	 * @param overrideConfig : {curFilePath: string} User may want to open a file from the file browser pane, not always from the active file.
+	 */
+	private open(
+		by: EditorName,
+		overrideConfig?: {
+			curFilePath?: string;
+		}
+	) {
+		const { curFilePath } = {
+			curFilePath: this.app.workspace.getActiveFile()?.path,
+			...overrideConfig,
+		};
 		if (!curFilePath) {
-			console.warn("no active file in workspace");
-			return;
+			return new Notice("No active file in workspace", 6000);
 		}
 		const { adapter } = this.app.vault;
 		const { basePath } = adapter as AdapterPlus;
 
 		const platform: NodeJS.Platform = os.platform();
 		if (["darwin"].includes(platform)) {
-			const file = {
+			const file: EditorNameToBinPathConfig = {
 				code: this.settingConfig.vscode_path,
 				gvim: this.settingConfig.gvim_path,
+				[CONST_TO_EDITOR_MAP.NVIM]: this.settingConfig.nvim_path,
 			};
 			return this.macopen(basePath, curFilePath, file[by]);
 		} else if (os.type() === "Windows_NT") {
@@ -153,10 +239,11 @@ export default class OpenFilePlg extends Plugin {
 				.catch((err: Error) => {
 					return {
 						err,
+						stat: null,
 					};
 				});
-			if (err) {
-				return console.log({ err });
+			if (err && !access) {
+				return console.log({ err, access });
 			}
 			await execa(file, [derived_path]);
 		})(by, this.app);
