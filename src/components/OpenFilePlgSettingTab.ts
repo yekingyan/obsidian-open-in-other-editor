@@ -17,14 +17,7 @@ export class OpenFilePlgSettingTab extends PluginSettingTab {
 			.setDesc("absolute")
 			.addText((text) =>
 				text
-					.setPlaceholder("hrm")
-					.then((component) => {
-						console.log({
-							component,
-							config: this.plugin.settingConfig,
-						});
-						return component;
-					})
+					.setPlaceholder("Place code here")
 					.setValue(this.plugin.settingConfig.vscode_path)
 					.onChange(async (value) => {
 						this.plugin.settingConfig.vscode_path = value;

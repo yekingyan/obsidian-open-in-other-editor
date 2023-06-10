@@ -51,20 +51,25 @@ function handleArguments(
 }
 type SettingConfig = {
 	vscode_path: string;
+	gvim_path: string;
 };
 export default class OpenFilePlg extends Plugin {
 	settingConfig: SettingConfig = {
 		vscode_path: "",
+		gvim_path: "",
 	};
 
-	doLoadSettingConfig() {
-		this.settingConfig = { ...this.settingConfig, ...this.loadData() };
+	async doLoadSettingConfig() {
+		this.settingConfig = {
+			...this.settingConfig,
+			...(await this.loadData()),
+		};
 	}
-	doSaveSettingConfig() {
-		this.saveData(this.settingConfig);
+	async doSaveSettingConfig() {
+		await this.saveData(this.settingConfig);
 	}
 	async onload() {
-		await this.doSaveSettingConfig();
+		await this.doLoadSettingConfig();
 
 		this.addCommand({
 			id: "open-in-other-editor-gvim",
@@ -98,8 +103,11 @@ export default class OpenFilePlg extends Plugin {
 
 		const platform: NodeJS.Platform = os.platform();
 		if (["darwin"].includes(platform)) {
-			const file = this.settingConfig.vscode_path;
-			return this.performAppleOpen(basePath, curFilePath, file);
+			const file = {
+				code: this.settingConfig.vscode_path,
+				gvim: this.settingConfig.gvim_path,
+			};
+			return this.macopen(basePath, curFilePath, file[by]);
 		}
 		cwd = cwd.replace("app://local/", "").replace(/\?\d+.*?/, "");
 		if (os.type() === "Windows_NT") {
@@ -109,7 +117,7 @@ export default class OpenFilePlg extends Plugin {
 		}
 	}
 
-	performAppleOpen(basePath: string, curFilePath: string, by: string) {
+	macopen(basePath: string, curFilePath: string, by: string) {
 		const {
 			path: { join },
 		} = this.app.vault.adapter as AdapterPlus;
