@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import OpenFilePlg from "../main";
 
 export class OpenFilePlgSettingTab extends PluginSettingTab {
@@ -12,9 +12,12 @@ export class OpenFilePlgSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		const checkSettingConfigTap = createTap<Setting>();
+
 		new Setting(containerEl)
 			.setName("vscode")
 			.setDesc("macOS only")
+			// .then(checkSettingConfigTap.bind(this))
 			.addText((text) =>
 				text
 					.setPlaceholder("Absolute path")
@@ -25,4 +28,11 @@ export class OpenFilePlgSettingTab extends PluginSettingTab {
 					})
 			);
 	}
+}
+
+function createTap<T>() {
+	return function (component: T) {
+		new Notice(JSON.stringify(this.plugin.settingConfig));
+		return this;
+	};
 }
