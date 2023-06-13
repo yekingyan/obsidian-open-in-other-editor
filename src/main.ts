@@ -92,7 +92,7 @@ export default class OpenFilePlg extends Plugin {
 		});
 
 		this.addCommand({
-			id: "open-in-other-editor-vscode",
+			id: "open-in-other-editor-nvim-qt",
 			name: "Open current active file in nvim",
 			callback: () => {
 				this.open("nvim-qt");
