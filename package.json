@@ -4,14 +4,15 @@
 	"description": "Open current active file in gVim or VScode.",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node --experimental-modules esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"dev": "node esbuild.config.mjs dev",
+		"build": "OBSIDIAN_TEST_VAULT= node esbuild.config.mjs production",
 		"version": "node --experimental-modules version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@ophidian/build": "^1.1.0",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
