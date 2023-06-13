@@ -239,10 +239,17 @@ export default class OpenFilePlg extends Plugin {
 				.catch((err: Error) => {
 					return {
 						err,
-						stat: null,
+						access: null,
 					};
 				});
 			if (err && !access) {
+				new Notice(
+					[
+						"Bin path in settings may be wrong",
+						err.message.split(":")[1],
+					].join("\n"),
+					5000
+				);
 				return console.log({ err, access });
 			}
 			await execa(file, [derived_path]);
