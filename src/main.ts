@@ -3,7 +3,7 @@ import * as os from "os";
 import { spawn, exec } from "child_process";
 import { OpenFilePlgSettingTab } from "./components/OpenFilePlgSettingTab";
 
-type EditorName = "gvim" | "code";
+type EditorName = "gvim" | "code" | "nvim-qt";
 type AdapterPlus = Partial<DataAdapter> & {
 	path: any;
 	basePath: any;
@@ -24,6 +24,7 @@ type HandleArguments = {
 	file: string;
 	args: string[];
 };
+
 export async function execa(file: string, args: string[]) {
 	const handledArgs = handleArguments(file, args);
 	let spawned = spawn(handledArgs.file, handledArgs.args);
@@ -43,16 +44,19 @@ export async function execa(file: string, args: string[]) {
 		}
 	});
 }
+
 function handleArguments(
 	file: HandleArguments["file"],
 	args: HandleArguments["args"]
 ) {
 	return { file, args };
 }
+
 type SettingConfig = {
 	vscode_path: string;
 	gvim_path: string;
 };
+
 export default class OpenFilePlg extends Plugin {
 	settingConfig: SettingConfig = {
 		vscode_path: "",
@@ -86,6 +90,15 @@ export default class OpenFilePlg extends Plugin {
 				this.open("code");
 			},
 		});
+
+		this.addCommand({
+			id: "open-in-other-editor-vscode",
+			name: "Open current active file in nvim",
+			callback: () => {
+				this.open("nvim-qt");
+			},
+		});
+
 		this.addSettingTab(new OpenFilePlgSettingTab(app, this));
 	}
 
@@ -97,7 +110,6 @@ export default class OpenFilePlg extends Plugin {
 			console.warn("no active file in workspace");
 			return;
 		}
-		let cwd = this.app.vault.adapter.getResourcePath(".");
 		const { adapter } = this.app.vault;
 		const { basePath } = adapter as AdapterPlus;
 
@@ -108,12 +120,10 @@ export default class OpenFilePlg extends Plugin {
 				gvim: this.settingConfig.gvim_path,
 			};
 			return this.macopen(basePath, curFilePath, file[by]);
-		}
-		cwd = cwd.replace("app://local/", "").replace(/\?\d+.*?/, "");
-		if (os.type() === "Windows_NT") {
-			runCMD(`cd /d ${cwd} && ${by} ./"${curFilePath}"`);
+		} else if (os.type() === "Windows_NT") {
+			runCMD(`cd /d "${basePath}" && ${by} "./${curFilePath}"`);
 		} else {
-			runCMD(`cd ${cwd} && ${by} ./"${curFilePath}"`);
+			runCMD(`cd "${basePath}" && ${by} "./${curFilePath}"`);
 		}
 	}
 

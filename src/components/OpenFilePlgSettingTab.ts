@@ -13,11 +13,11 @@ export class OpenFilePlgSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("path to vscode ")
-			.setDesc("absolute")
+			.setName("vscode")
+			.setDesc("macOS only")
 			.addText((text) =>
 				text
-					.setPlaceholder("Place code here")
+					.setPlaceholder("Absolute path")
 					.setValue(this.plugin.settingConfig.vscode_path)
 					.onChange(async (value) => {
 						this.plugin.settingConfig.vscode_path = value;
