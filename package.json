@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-open-in-other-editor",
 	"version": "0.0.5",
-	"description": "Open current active file in gVim or VScode.",
+	"description": "Open current active file in gVim, neovide or VScode.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs dev",
